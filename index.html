@@ -161,75 +161,61 @@
     </div>
 
     <script>
-        // Replace these with your actual Sheet ID and sheet name
-        const SHEET_ID = '1cNnkg6fRitSrtA3SRDRJnzqts7Wpff6y-C_f1l2q2XY';
-        const SHEET_NAME = 'Sheet1';
+<script>
+    // Replace these with your actual Sheet ID and sheet name
+    const SHEET_ID = '1cNnkg6fRitSrtA3SRDRJnzqts7Wpff6y-C_f1l2q2XY';
+    const SHEET_NAME = 'Sheet1';
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}&headers=1`;
 
-        // This URL generates a CSV export from your Google Sheet
-        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}&headers=1`;
+    async function fetchReturns() {
+        try {
+            const response = await fetch(CSV_URL);
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            const csvData = await response.text();
+            const rows = csvData.split('\n').map(row => row.trim()).filter(row => row);
+            
+            // Remove header row
+            const header = rows.shift();
+            console.log('CSV Header:', header);  // Debugging
 
-        async function fetchReturns() {
-            try {
-                const response = await fetch(CSV_URL);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+            document.querySelectorAll('.portfolio-card').forEach(card => {
+                const portfolioName = card.querySelector('h2').textContent.trim();
+                const returnElement = card.querySelector('.return');
+                
+                const rowData = rows.map(row => {
+                    // Split row while preserving quoted commas
+                    const cells = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    return cells.map(cell => {
+                        // Remove surrounding quotes and trim
+                        return cell.replace(/^"(.*)"$/, '$1').trim();
+                    });
+                });
+
+                console.log('Processed Row Data:', rowData);  // Debugging
+                
+                const matchingRow = rowData.find(cols => cols[0] === portfolioName);
+                console.log(`Matching ${portfolioName}:`, matchingRow);  // Debugging
+
+                if (matchingRow?.[1]) {
+                    returnElement.textContent = `${matchingRow[1]} Return`;
+                } else {
+                    returnElement.textContent = 'Data not found';
+                    console.warn(`No data for: ${portfolioName}`);
                 }
-
-                // Get the CSV data as text
-                const csvData = await response.text();
-
-                // Split the CSV data into rows, trimming empty lines
-                const rows = csvData
-                    .split('\n')
-                    .map(row => row.trim())
-                    .filter(row => row);
-
-                // Remove the header row (assuming the first row is headers)
-                rows.shift();
-
-                // For each portfolio card, match the correct CSV row:
-                document.querySelectorAll('.portfolio-card').forEach(card => {
-                    const portfolioName = card.querySelector('h2').textContent.trim();
-                    const returnElement = card.querySelector('.return');
-
-                    // Convert each row into an array of columns
-                    // e.g. rowData[i] might look like ["Beginner Portfolio", "5%"]
-                    const rowData = rows.map(r => {
-  			// e.g. r = "\"Beginner Portfolio\",\"12%\""
-  			// Split on commas:
-  			const cols = r.split(',');
-  			// Strip leading/trailing quotes and trim spaces:
-  			return cols.map(cell => cell.replace(/^"|"$/g, '').trim());
-			});
-
-                    // Find the row whose first cell matches the portfolio name exactly
-                    const matchingRow = rowData.find(cols => cols[0] === portfolioName);
-
-                    if (matchingRow && matchingRow.length > 1) {
-                        // The second column is presumably the return value
-                        const returnValue = matchingRow[1];
-                        returnElement.textContent = `${returnValue} Return`;
-                    } else {
-                        returnElement.textContent = 'Data not found';
-                    }
-
-                    // Remove the "loading" style once we have a result
-                    returnElement.classList.remove('loading');
-                });
-            } catch (error) {
-                console.error('Fetch error:', error);
-                document.querySelectorAll('.return').forEach(el => {
-                    el.textContent = 'Returns currently unavailable';
-                    el.classList.remove('loading');
-                });
-            }
+                returnElement.classList.remove('loading');
+            });
+        } catch (error) {
+            console.error('Fetch error:', error);
+            document.querySelectorAll('.return').forEach(el => {
+                el.textContent = 'Returns currently unavailable';
+                el.classList.remove('loading');
+            });
         }
+    }
 
-        // Load returns when the page is first loaded
-        document.addEventListener('DOMContentLoaded', fetchReturns);
-
-        // Optionally refresh every 5 minutes (300,000 ms)
-        setInterval(fetchReturns, 300000);
-    </script>
+    document.addEventListener('DOMContentLoaded', fetchReturns);
+    setInterval(fetchReturns, 300000);
+</script>
 </body>
 </html>
