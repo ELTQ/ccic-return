@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorado College Investment Club Portfolios</title>
+    <style>
+        :root {
+            --cc-navy: #003366;
+            --cc-gold: #CC9933;
+            --beginner: #4CAF50;
+            --sustainability: #009688;
+            --technology: #2196F3;
+            --quant: #9C27B0;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        header {
+            background: var(--cc-navy);
+            color: white;
+            padding: 6rem 2rem 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .cc-logo {
+            height: 60px;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .portfolio-container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            padding: 0 20px;
+        }
+
+        .portfolio-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .portfolio-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .portfolio-header {
+            border-bottom: 4px solid;
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .portfolio-header h2 {
+            margin: 0;
+            color: var(--cc-navy);
+            font-size: 1.5rem;
+        }
+
+        .beginner .portfolio-header { border-color: var(--beginner); }
+        .sustainability .portfolio-header { border-color: var(--sustainability); }
+        .technology .portfolio-header { border-color: var(--technology); }
+        .quant .portfolio-header { border-color: var(--quant); }
+
+        .return {
+            color: var(--cc-gold);
+            font-weight: 700;
+            font-size: 1.4rem;
+            margin: 1.5rem 0;
+        }
+
+        .portfolio-details {
+            color: #666;
+            font-size: 0.95rem;
+            margin-top: 1rem;
+        }
+
+        .loading {
+            color: #999;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 5rem 1.5rem 1.5rem;
+            }
+            
+            .cc-logo {
+                height: 50px;
+                top: 15px;
+            }
+
+            .portfolio-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .portfolio-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/34/Colorado_College_logo.svg" 
+             alt="Colorado College Logo" 
+             class="cc-logo">
+        <h1>Colorado College Investment Club</h1>
+    </header>
+
+    <div class="portfolio-container">
+        <article class="portfolio-card beginner">
+            <div class="portfolio-header">
+                <h2>Beginner Portfolio</h2>
+            </div>
+            <div class="return loading">Loading...</div>
+            <p class="portfolio-details">Conservative allocation focused on long-term growth through index funds and blue-chip stocks</p>
+        </article>
+
+        <article class="portfolio-card sustainability">
+            <div class="portfolio-header">
+                <h2>Sustainability Portfolio</h2>
+            </div>
+            <div class="return loading">Loading...</div>
+            <p class="portfolio-details">ESG-focused investments in renewable energy and sustainable technologies</p>
+        </article>
+
+        <article class="portfolio-card technology">
+            <div class="portfolio-header">
+                <h2>Technology Portfolio</h2>
+            </div>
+            <div class="return loading">Loading...</div>
+            <p class="portfolio-details">Growth-oriented portfolio targeting emerging tech and innovation leaders</p>
+        </article>
+
+        <article class="portfolio-card quant">
+            <div class="portfolio-header">
+                <h2>Quant Portfolio</h2>
+            </div>
+            <div class="return loading">Loading...</div>
+            <p class="portfolio-details">Algorithm-driven strategies using statistical models and market analytics</p>
+        </article>
+    </div>
+
+    <script>
+        // Replace these with your actual Sheet ID and sheet name
+        const SHEET_ID = '1cNnkg6fRitSrtA3SRDRJnzqts7Wpff6y-C_f1l2q2XY';
+        const SHEET_NAME = 'Sheet1';
+
+        // This URL generates a CSV export from your Google Sheet
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}&headers=1`;
+
+        async function fetchReturns() {
+            try {
+                const response = await fetch(CSV_URL);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                // Get the CSV data as text
+                const csvData = await response.text();
+
+                // Split the CSV data into rows, trimming empty lines
+                const rows = csvData
+                    .split('\n')
+                    .map(row => row.trim())
+                    .filter(row => row);
+
+                // Remove the header row (assuming the first row is headers)
+                rows.shift();
+
+                // For each portfolio card, match the correct CSV row:
+                document.querySelectorAll('.portfolio-card').forEach(card => {
+                    const portfolioName = card.querySelector('h2').textContent.trim();
+                    const returnElement = card.querySelector('.return');
+
+                    // Convert each row into an array of columns
+                    // e.g. rowData[i] might look like ["Beginner Portfolio", "5%"]
+                    const rowData = rows.map(r => r.split(',').map(cell => cell.trim()));
+
+                    // Find the row whose first cell matches the portfolio name exactly
+                    const matchingRow = rowData.find(cols => cols[0] === portfolioName);
+
+                    if (matchingRow && matchingRow.length > 1) {
+                        // The second column is presumably the return value
+                        const returnValue = matchingRow[1];
+                        returnElement.textContent = `${returnValue} Return`;
+                    } else {
+                        returnElement.textContent = 'Data not found';
+                    }
+
+                    // Remove the "loading" style once we have a result
+                    returnElement.classList.remove('loading');
+                });
+            } catch (error) {
+                console.error('Fetch error:', error);
+                document.querySelectorAll('.return').forEach(el => {
+                    el.textContent = 'Returns currently unavailable';
+                    el.classList.remove('loading');
+                });
+            }
+        }
+
+        // Load returns when the page is first loaded
+        document.addEventListener('DOMContentLoaded', fetchReturns);
+
+        // Optionally refresh every 5 minutes (300,000 ms)
+        setInterval(fetchReturns, 300000);
+    </script>
+</body>
+</html>
