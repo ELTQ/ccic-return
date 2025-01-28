@@ -194,7 +194,13 @@
 
                     // Convert each row into an array of columns
                     // e.g. rowData[i] might look like ["Beginner Portfolio", "5%"]
-                    const rowData = rows.map(r => r.split(',').map(cell => cell.trim()));
+                    const rowData = rows.map(r => {
+  			// e.g. r = "\"Beginner Portfolio\",\"12%\""
+  			// Split on commas:
+  			const cols = r.split(',');
+  			// Strip leading/trailing quotes and trim spaces:
+  			return cols.map(cell => cell.replace(/^"|"$/g, '').trim());
+			});
 
                     // Find the row whose first cell matches the portfolio name exactly
                     const matchingRow = rowData.find(cols => cols[0] === portfolioName);
